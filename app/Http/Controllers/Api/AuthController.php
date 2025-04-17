@@ -131,4 +131,12 @@ class AuthController extends Controller
             'user' => $user,
         ], 201);
     }
+
+    public function checkLogin()
+    {
+        if (auth()->check()) {
+            return response()->json(['message' => 'Đã đăng nhập', 'user' => auth()->user()], 200);
+        }
+        return response()->json(['message' => 'Chưa đăng nhập'], 401);
+    }
 }

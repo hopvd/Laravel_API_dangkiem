@@ -15,6 +15,7 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
+        // dd(11111111);
         if($request->user()->role!=1){
             return response()->json([
                 'message'=>'You do not have permission',

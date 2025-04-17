@@ -13,13 +13,20 @@ class OwnerController extends Controller
         $this->middleware('auth:api');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-//        $owner = Owner::all();
-        $owner = Owner::paginate(2);
+        dd($request->input('page'));
+        $page = !empty($request->input('page')) ? $request->input('page') : 1;
+        $limit = !empty($request->input('limit')) ? $request->input('limit') : 10;
 
-        return response()->json($owner);
-    }
+        // $owner = Owner::all();
+        $owner = Owner::paginate(2);
+        // dd($owner);
+
+        return response()->json([
+            'data' => $owner,
+            'status' => 'success'
+        ]);    }
 
     public function store(Request $request)
     {
