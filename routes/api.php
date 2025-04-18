@@ -46,6 +46,8 @@ Route::group([
     Route::post('/vehicle', [VehicleController::class, 'store']);
     Route::put('/vehicle/{id}', [VehicleController::class, 'update']);
     Route::delete('/vehicle/{id}', [VehicleController::class, 'destroy']);
+    Route::get('/vehicles/by_owner_id', action: [VehicleController::class, 'getByOwnerId']);
+    Route::get('/vehicles/by_license_plate', action: [VehicleController::class, 'getByLicensePlate']);
 });
 
 Route::group([
@@ -70,6 +72,7 @@ Route::group([
     Route::post('/owner', [OwnerController::class, 'store']);
     Route::put('/owner/{id}', [OwnerController::class, 'update']);
     Route::delete('/owner/{id}', [OwnerController::class, 'destroy']);
+    Route::get('/owner/{id}/vehicles', [VehicleController::class, 'getByOwnerId']);
 });
 
 Route::group([
