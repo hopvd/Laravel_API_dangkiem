@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Validator;
 
 class AuthController extends Controller
@@ -91,7 +92,7 @@ class AuthController extends Controller
         ]);
     }
 
-    public function changePassWord(Request $request) {
+    public function changePassword(Request $request) {
         $validator = Validator::make($request->all(), [
             'old_password' => 'required|string|min:6',
             'new_password' => 'required|string|confirmed|min:6',
@@ -100,11 +101,23 @@ class AuthController extends Controller
         if($validator->fails()){
             return response()->json($validator->errors()->toJson(), 400);
         }
-        $userId = auth()->user()->id;
 
-        $user = User::where('id', $userId)->update(
-            ['password' => bcrypt($request->new_password)]
-        );
+        // Kiểm tra mật khẩu mới có giống nhau không 
+        if ($request->old_password == $request->new_password) {
+            return response()->json([            
+                'message' => 'Mật khẩu mới không được giống mật khẩu cũ'
+            ], 400);
+        }
+
+        $user = auth()->user();
+        // Kiểm tra mật khẩu cũ
+        if (!Hash::check($request->old_password, $user->password)) {
+            return response()->json([
+                'message' => 'Mật khẩu cũ không đúng'
+            ], 400);
+        }
+        $user->password = bcrypt($request->new_password);
+        $user->save();
 
         return response()->json([
             'message' => 'User successfully changed password',

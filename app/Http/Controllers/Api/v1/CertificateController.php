@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use App\Models\Certificate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class CertificateController extends Controller
 {
@@ -45,16 +46,36 @@ class CertificateController extends Controller
 
     public function store(Request $request)
     {
-        $certificate = new Certificate();
-        $certificate->start_date = $request->input('start_date');
-        $certificate->expired_date = $request->input('expired_date');
-        $certificate->vehicle_id = $request->input('vehicle_id');
-        $certificate->user_id = $request->input('user_id');
-        $certificate->code = $this->_genCode();
+        $data = $request->all();
+        $validator = Validator::make($data, [
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'start_date' => 'required|date',
+            'expired_date' => 'required|date',
+            'result' => 'required',
+            'note' => 'nullable|string'
+        ]);
 
-        $certificate->save();
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
-        return response()->json($certificate);
+        $data['user_id'] = $request->user()->id;
+
+        $certi = Certificate::insert($data);
+        if (!$certi) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "Can't add data!!"
+            ], 422);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $request->all()
+        ]);
     }
 
     public function show($id)
@@ -68,7 +89,10 @@ class CertificateController extends Controller
             ], 404);
         }
 
-        return response()->json($certificate);
+        return response()->json([
+            'status' => 'success',
+            'data' => $certificate
+        ]);    
     }
 
     public function update(Request $request, $id)
@@ -82,13 +106,26 @@ class CertificateController extends Controller
             ], 404);
         }
 
-        $certificate->start_date = $request->input('start_date');
-        $certificate->expired_date = $request->input('expired_date');
-        $certificate->vehicle_id = $request->input('vehicle_id');
-        $certificate->user_id = $request->input('user_id');
-        $certificate->save();
+        $validator = Validator::make($request->all(), [
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'start_date' => 'required|date',
+            'expired_date' => 'required|date|',
+            'result' => 'required',
+            'note' => 'nullable|string'
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
-        return response()->json($certificate);
+        $certificate->update($request->all());
+
+        return response()->json([
+            'data' => $certificate,
+            'status' => 'success'
+        ]);
     }
 
     public function destroy($id)

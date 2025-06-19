@@ -84,7 +84,7 @@ class UserController extends Controller
             $user = User::find($id);
 
             return response()->json([
-                'status' => 'sucess',
+                'status' => 'success',
                 'data' => $user
             ], 200);
         } else {
@@ -118,6 +118,9 @@ class UserController extends Controller
         if ($request->user()->role == 1) {
             try {
                 $user = User::findOrFail($id);
+                if (!empty($data['password'])) {
+                    $data['password'] = bcrypt($data['password']);
+                }
                 $user->update($data);
 
                 return response()->json([
@@ -148,7 +151,7 @@ class UserController extends Controller
 
     public function destroy(Request $request,$id)
     {
-        if($request->user()->usertype!=1){
+        if($request->user()->role!=1){
             return response()->json(['message'=>'You do not have permission', 'status' => 'error'],403);
         }
         $user = User::find($id);

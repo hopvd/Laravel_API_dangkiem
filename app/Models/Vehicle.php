@@ -13,6 +13,10 @@ class Vehicle extends Model
     {
         return $this->belongsTo(Owner::class);
     }
+    public function certificate()
+    {
+        return $this->hasMany( Certificate::class);
+    }
 
     public static function getByLicensePlate($plate)
     {

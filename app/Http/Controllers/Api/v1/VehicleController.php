@@ -14,9 +14,12 @@ class VehicleController extends Controller
         $this->middleware('auth:api');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $vehicle = Vehicle::all();
+        $page = !empty($request->input('page')) ? $request->input('page') : 1;
+        $limit = !empty($request->input('limit')) ? $request->input('limit') : 10;
+
+        $vehicle = Vehicle::paginate(10);
 
         return response()->json([
             'data' => $vehicle,
@@ -40,7 +43,6 @@ class VehicleController extends Controller
                 'errors' => $validator->errors()
             ], 422);
         }
-        // dd($request->all());
 
         $vehicle = Vehicle::insert($request->all());
         if (!$vehicle) {
