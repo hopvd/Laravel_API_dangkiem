@@ -21,6 +21,11 @@ class Certificate extends Model
         return $this->belongsTo(Vehicle::class);
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function findById($id) {
         return self::query()
             ->where('id', $id) 

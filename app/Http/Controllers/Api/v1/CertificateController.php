@@ -2,46 +2,116 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Http\Controllers\ApiController;
 use App\Http\Controllers\Controller;
 use App\Models\Certificate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
-class CertificateController extends Controller
+class CertificateController extends ApiController
 {
-    protected $_data;
-
     public function __construct()
     {
+        parent::__construct();
         $this->middleware('auth:api');
-        $this->_data = new Certificate();
     }
 
     public function index()
     {
-        $certificate = $this->_data->select(
-            ['certificates.id',
-                'certificates.code',
-                'certificates.start_date',
-                'certificates.expired_date',
-                'vehicles.name',
-                'users.name',
-                'certificates.created_at',
-                'certificates.updated_at']
-        )
-            ->join('vehicles', 'certificates.vehicle_id', '=', 'vehicles.id')
-            ->join('users', 'certificates.user_id', '=', 'users.id')
-            ->get();
+        if (request()->user()->role == 1) {
+            $certificate = Certificate::with(['vehicle', 'user'])->get();
+        } else {
+            $certificate = Certificate::with(['vehicle', 'user'])
+                ->where('user_id', request()->user()->id)
+                ->get();
+        }
 
-        return response()->json($certificate);
+        if ($certificate->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No certificates found'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $certificate
+        ], 200);
     }
 
-    public function getList(Request $request)
+    public function getByVehicleId(Request $request)
     {
-        $certificate = $this->_data->getData($request->input());
-//        dd($certificate);
+        $vehicleId = $request->input('vehicle_id');
+        $validator = Validator::make($request->all(), [
+            'vehicle_id' => 'required|exists:vehicles,id'
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        if (request()->user()->role == 1) {
+            $certificate = Certificate::with(['vehicle', 'user'])
+                ->where('vehicle_id', $vehicleId)
+                ->get();
+        } else {
+            $certificate = Certificate::with(['vehicle', 'user'])
+                ->where('vehicle_id', $vehicleId)
+                ->where('user_id', request()->user()->id)
+                ->get();
+        }
+        if ($certificate->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No certificates found for this vehicle'
+            ], 404);
+        }
 
-        return response()->json($certificate);
+        return response()->json([
+            'status' => 'success',
+            'data' => $certificate
+        ], 200);
+    }
+
+    public function getByLicensePlate(Request $request)
+    {
+        $licensePlate = $request->input('license_plate');
+        $validator = Validator::make($request->all(), [
+            'license_plate' => 'required|exists:vehicles,license_plate'
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        if (request()->user()->role == 1) {
+            $certificate = Certificate::whereHas('vehicle', function($query) use ($licensePlate) {
+                $query->where('license_plate', $licensePlate);
+            })->with('vehicle:id,license_plate')->get();
+        } else {
+            $certificate = Certificate::whereHas('vehicle', function($query) use ($licensePlate) {
+                $query->where('license_plate', $licensePlate);
+            })->with('vehicle:id,license_plate')
+            ->where('user_id', request()->user()->id)
+            ->get();
+        }
+        if ($certificate->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No certificates found for this vehicle'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $certificate
+        ], 200);
+    
+        
+
+
     }
 
     public function store(Request $request)
@@ -80,7 +150,11 @@ class CertificateController extends Controller
 
     public function show($id)
     {
-        $certificate = $this->_data->findById($id);
+        $certificate = Certificate::with(['vehicle', 'user'])
+                        ->where('id', $id)
+                        ->where('user_id', request()->user()->id)
+                        ->orWhere('user_id', 1) // Admin can see all certificates
+                        ->first();
 
         if (!$certificate) {
             return response()->json([
@@ -97,7 +171,10 @@ class CertificateController extends Controller
 
     public function update(Request $request, $id)
     {
-        $certificate = Certificate::find($id);
+        $certificate = Certificate::where('id', $id)
+                        ->where('user_id', request()->user()->id)
+                        ->orWhere('user_id', 1) // Admin can see all certificates
+                        ->first();
 
         if (!$certificate) {
             return response()->json([
@@ -130,7 +207,10 @@ class CertificateController extends Controller
 
     public function destroy($id)
     {
-        $certificate = Certificate::find($id);
+        $certificate = Certificate::where('id', $id)
+                        ->where('user_id', request()->user()->id)
+                        ->orWhere('user_id', 1) // Admin can see all certificates
+                        ->first();
 
         if (!$certificate) {
             return response()->json([

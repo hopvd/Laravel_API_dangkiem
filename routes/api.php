@@ -29,13 +29,20 @@ Route::group([
     'prefix' => 'auth'
 
 ], function ($router) {
-    Route::get('/check-login', [AuthController::class, 'checkLogin']);
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/login',  [AuthController::class, 'login']);
+    Route::post('/register',  [AuthController::class, 'register']);
+    Route::get('/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::get('/reset-password',  [AuthController::class, 'resetPassword']);
+
+
+});
+
+// Protected routes (cần authentication)
+Route::group(['prefix' => 'auth', 'middleware' => 'auth:sanctum'], function () {
+    Route::post('/logout',  [AuthController::class, 'logout']);
+    Route::post('/logout-all',  [AuthController::class, 'logoutAll']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
-    Route::get('/user-profile', [AuthController::class, 'userProfile']);
-    Route::post('/change-pass', [AuthController::class, 'changePassword']);
+    Route::post('/change-password',  [AuthController::class, 'changePassword']);
 });
 
 Route::group([
@@ -79,6 +86,8 @@ Route::group([
     'middleware' => 'api'
 ], function ($router) {
     Route::get('/certificates', [CertificateController::class, 'index']);
+    Route::get('/certificate/by_vehicle_id', [CertificateController::class, 'getByVehicleId']);
+    Route::get('/certificate/by_license_plate', [CertificateController::class, 'getByLicensePlate']);
     Route::post('/certificate/getlist', [CertificateController::class, 'getList']);
     Route::get('/certificate/{id}', [CertificateController::class, 'show']);
     Route::post('/certificate', [CertificateController::class, 'store']);

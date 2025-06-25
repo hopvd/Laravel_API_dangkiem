@@ -5,7 +5,9 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Validator;
+use Exception;
 
 class AuthController extends Controller
 {
@@ -76,13 +78,6 @@ class AuthController extends Controller
         return response()->json(auth()->user());
     }
 
-    /**
-     * Get the token array structure.
-     *
-     * @param  string $token
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     protected function createNewToken($token){
         return response()->json([
             'access_token' => $token,
@@ -131,5 +126,36 @@ class AuthController extends Controller
             return response()->json(['message' => 'Đã đăng nhập', 'user' => auth()->user()], 200);
         }
         return response()->json(['message' => 'Chưa đăng nhập'], 401);
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email|exists:users,email'
+            ]);
+            
+            if ($validator->fails()) {
+                return $this->validationErrorResponse($validator->errors());
+            }
+            
+            $status = Password::sendResetLink(
+                $request->only('email')
+            );
+            
+            if ($status === Password::RESET_LINK_SENT) {
+                return $this->successResponse(null, 'Reset password link sent to your email');
+            }
+            
+            return $this->errorResponse('Unable to send reset password link', 500);
+            
+        } catch (Exception $e) {
+            return $this->errorResponse('Forgot password failed', 500);
+        }
+    }
+
+    public function resetPassword(Request $request)
+    {
+
     }
 }
