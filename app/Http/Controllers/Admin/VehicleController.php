@@ -7,12 +7,16 @@ use App\Http\Controllers\Controller;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class VehicleController extends AdminController
 {
     public function __construct()
     {
-        parent::__contruct();
+        parent::__construct();
+        $this->middleware('auth')->except(['index', 'show']);
 
     }
 

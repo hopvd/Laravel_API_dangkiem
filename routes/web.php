@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Admin\User\LoginController;
+use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\HomeController;
 use App\Http\Controllers\Admin\VehicleController;
+use App\Http\Controllers\Admin\OwnerController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -24,10 +26,11 @@ Route::group([
     'prefix' => 'admin'
 
 ], function ($router) {
-    Route::get('/login', [LoginController::class, 'index'])->name('admin.login');
-    Route::post('/login', [LoginController::class, 'login']);
-    Route::post('/logout', [LoginController::class, 'logout']);
-    Route::get('/home', [HomeController::class, 'index'])->name('home')->middleware('isLoggedIn');
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('admin.login');
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/home', [HomeController::class, 'index'])->name('home');
+    Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard')->middleware('auth');
     Route::get('/user-profile', [HomeController::class, 'userProfile']);
 
     Route::prefix('vehicle')->group(function () {
